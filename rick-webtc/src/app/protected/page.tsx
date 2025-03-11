@@ -14,7 +14,6 @@ interface Comic {
   id: number;
   name: string;
   description: string | null;
-  creators: string;
   thumbnail: {
     path: string;
     extension: string;
@@ -27,6 +26,9 @@ export default function ProtectedPage() {
   const [comics, setComics] = useState<Comic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   useEffect(() => {
     const auth = localStorage.getItem("auth") === "true";
@@ -54,6 +56,16 @@ export default function ProtectedPage() {
     fetchComics();
   }, [router]);
 
+  const filteredComics = comics.filter((comic) =>
+    comic.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredComics.length / itemsPerPage);
+  const currentComics = filteredComics.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   if (!isAuthenticated) return null;
   if (loading) return <Layout><p className="text-center text-lg">Loading...</p></Layout>;
   if (error) return <Layout><p className="text-center text-red-500">Error: {error}</p></Layout>;
@@ -62,8 +74,17 @@ export default function ProtectedPage() {
     <Layout>
       <h2 className="text-3xl">Página Protegida 🔒</h2>
       <p className="mt-2">Solo los usuarios autenticados pueden ver esto.</p>
-      <div className="grid grid-cols-1 md:grid-cols-5 lg:grid-cols-5 gap-7 p-7">
-        {comics.map((comic) => (
+
+      <input
+        type="text"
+        placeholder="Buscar personajes..."
+        className="p-2 border rounded-md w-full mt-4 text-black"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-7 p-7">
+        {currentComics.map((comic) => (
           <div key={comic.id} className="bg-white shadow-md rounded-lg overflow-hidden p-4">
             <Image
               src={`${comic.thumbnail.path}/portrait_xlarge.${comic.thumbnail.extension}`}
@@ -79,6 +100,26 @@ export default function ProtectedPage() {
             </p>
           </div>
         ))}
+      </div>
+
+      <div className="flex justify-center gap-3 mt-4">
+        <button
+          className="px-4 py-2 bg-gray-300 rounded-md"
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+        >
+          Anterior
+        </button>
+        <span className="px-4 py-2 bg-gray-200 rounded-md">
+          Página {currentPage} de {totalPages}
+        </span>
+        <button
+          className="px-4 py-2 bg-gray-300 rounded-md"
+          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          disabled={currentPage === totalPages}
+        >
+          Siguiente
+        </button>
       </div>
     </Layout>
   );
