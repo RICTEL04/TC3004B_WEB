@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import { User, Lock, Mail } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function RegisterPage() {
   const [username, setUsername] = useState("");
@@ -12,14 +13,17 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const router = useRouter();
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (username && email && password) {
-      localStorage.setItem("user", JSON.stringify({ username, email, password }));
-      router.push("/login");
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+  
+    if (error) {
+      setError(error.message);
     } else {
-      setError("Todos los campos son obligatorios");
+      router.push("/login");
     }
   };
 

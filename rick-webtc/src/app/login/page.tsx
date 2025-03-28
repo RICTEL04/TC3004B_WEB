@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 import { User, Lock } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -11,14 +12,17 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const router = useRouter();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (username === "admin" && password === "password") {
-      localStorage.setItem("auth", "true");
-      router.push("/protected");
-    } else {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: username, // Asegúrate de usar el email en lugar del username
+      password,
+    });
+  
+    if (error) {
       setError("Credenciales incorrectas");
+    } else {
+      router.push("/protected");
     }
   };
 

@@ -3,14 +3,24 @@
 import { useState } from "react";
 import Layout from "@/components/Layout";
 import { Mail } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleReset = (e: React.FormEvent) => {
+  const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage("Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.");
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: "http://localhost:3000//reset-password",
+    });
+    
+  
+    if (error) {
+      setMessage("Error al enviar el enlace");
+    } else {
+      setMessage("Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.");
+    }
   };
 
   return (

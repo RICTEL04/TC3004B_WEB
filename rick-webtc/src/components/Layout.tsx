@@ -2,13 +2,29 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const isAuthenticated = typeof window !== "undefined" && localStorage.getItem("auth") === "true";
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const handleLogout = () => {
-    localStorage.removeItem("auth");
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session) {
+        setIsAuthenticated(false);
+      } else {
+        setIsAuthenticated(true);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsAuthenticated(false);
     router.push("/login");
   };
 
@@ -17,15 +33,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Header */}
       <header className="bg-gray-800 p-4 flex justify-between items-center">
         <h1 className="text-2xl">Mi App</h1>
-        {!isAuthenticated && (
+        {!isAuthenticated ? (
           <button
             onClick={() => router.push("/login")}
             className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
           >
             Iniciar Sesión
           </button>
-        )}
-        {isAuthenticated && (
+        ) : (
           <button
             onClick={handleLogout}
             className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"

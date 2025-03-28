@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Layout from "@/components/Layout";
+import { supabase } from "@/lib/supabaseClient";
 
 const PUBLIC_KEY = 'd2f34d724f1d139a828b2d7da58b10df';
 const TS = '1741295875929';
@@ -31,13 +32,20 @@ export default function ProtectedPage() {
   const itemsPerPage = 5;
 
   useEffect(() => {
-    const auth = localStorage.getItem("auth") === "true";
-    setIsAuthenticated(auth);
+    const checkAuth = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session) {
+        router.push("/login");
+      } else {
+        setIsAuthenticated(true);
+      }
+    };
 
-    if (!auth) {
-      router.push("/login");
-      return;
-    }
+    checkAuth();
+  }, [router]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
 
     const fetchComics = async () => {
       try {
