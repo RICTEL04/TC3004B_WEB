@@ -5,15 +5,17 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Layout from "@/components/Layout";
 import { supabase } from "@/lib/supabaseClient";
+import md5 from 'crypto-js/md5';
 
 const PUBLIC_KEY = 'd2f34d724f1d139a828b2d7da58b10df';
-const TS = '1741295875929';
-const HASH = 'aca5940c04af13ee101b44ab9634665d';
-const API_URL = `https://gateway.marvel.com/v1/public/characters?apikey=${PUBLIC_KEY}&ts=${TS}&hash=${HASH}&limit=100`;
+const PRIVATE_KEY = '5aa8cbba26b2dbb7163e6a67eba24bc3ee7e350c'
+const TS = new Date().getTime().toString();
+const HASH = md5(TS + PRIVATE_KEY + PUBLIC_KEY).toString();
+const API_URL = `https://gateway.marvel.com/v1/public/comics?apikey=${PUBLIC_KEY}&ts=${TS}&hash=${HASH}&limit=100`;
 
 interface Comic {
   id: number;
-  name: string;
+  title: string; // Cambiado de name a title
   description: string | null;
   thumbnail: {
     path: string;
@@ -49,6 +51,10 @@ export default function ProtectedPage() {
 
     const fetchComics = async () => {
       try {
+        const ts = new Date().getTime().toString();
+        const hash = md5(ts + PRIVATE_KEY + PUBLIC_KEY).toString();
+        const API_URL = `https://gateway.marvel.com/v1/public/comics?apikey=${PUBLIC_KEY}&ts=${ts}&hash=${hash}&limit=100`;
+
         const response = await fetch(API_URL);
         if (!response.ok) {
           throw new Error("Error fetching data");
@@ -62,10 +68,10 @@ export default function ProtectedPage() {
       }
     };
     fetchComics();
-  }, [router]);
+  }, [isAuthenticated]);
 
   const filteredComics = comics.filter((comic) =>
-    comic.name.toLowerCase().includes(search.toLowerCase())
+    comic.title.toLowerCase().includes(search.toLowerCase()) // Cambiado de name a title
   );
 
   const totalPages = Math.ceil(filteredComics.length / itemsPerPage);
@@ -96,13 +102,13 @@ export default function ProtectedPage() {
           <div key={comic.id} className="bg-white shadow-md rounded-lg overflow-hidden p-4">
             <Image
               src={`${comic.thumbnail.path}/portrait_xlarge.${comic.thumbnail.extension}`}
-              alt={comic.name}
+              alt={comic.title} // Cambiado de name a title
               width={150}
               height={225}
               className="w-full h-auto rounded"
               unoptimized
             />
-            <h3 className="text-black text-lg font-bold mt-2">{comic.name}</h3>
+            <h3 className="text-black text-lg font-bold mt-2">{comic.title}</h3> {/* Cambiado de name a title */}
             <p className="text-sm text-gray-600 mt-1">
               {comic.description ? comic.description : "No description available"}
             </p>
